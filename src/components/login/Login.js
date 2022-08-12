@@ -24,17 +24,21 @@ const getDataFromLS = () => {
 };
 
 function Login() {
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm();
 
-  const navigate = useNavigate();
 
   const [users, setUsers] = useState(getDataFromLS());
 
   useEffect(() => {
+    const token = localStorage.getItem("usertoken");
+    if (token){
+      navigate('/dashboard')
+    }
     const data = localStorage.getItem("userList");
     const parsedData = JSON.parse(data);
     setUsers(parsedData);

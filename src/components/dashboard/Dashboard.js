@@ -1,17 +1,73 @@
-import { Box, Button, Card, CardActions, CardContent, CardHeader, CardMedia, Grid, Modal, Typography } from "@mui/material";
-import React, { useEffect, useState } from "react";
-import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
+import { useEffect, useState } from "react";
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { 
+  CardActions, 
+  CardContent, 
+  IconButton, 
+  CardHeader, 
+  Typography, 
+  CardMedia, 
+  Button, 
+  Modal, 
+  Card, 
+  Grid, 
+  Box
+} from "@mui/material";
 import './Dashboard.css'
+
 function Dashboard() {
+
   const navigate = useNavigate();
-  const [user, setUser] = useState({})
   const [movies, setMovies] = useState([])
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+
+  useEffect(() => {
+    fetchData();
+    const token = localStorage.getItem("usertoken")
+    if (!token) {
+      navigate('/')
+    }
+  }, [navigate])
+
+  useEffect(() => {
+    const result = localStorage.getItem("result")
+    const data = JSON.parse(result)
+    setMovies(data)
+  }, [])
+
+  const handleVotedec = (id) => {
+    const votes = movies.map((data) => {
+      if (data._id === id) {
+        return {
+          ...data,
+          totalVoted: data.totalVoted - 1
+        }
+      }
+      return data;
+    })
+    setMovies(votes)
+    localStorage.setItem("result", JSON.stringify(votes))
+  }
+
+  const handleVoteinc = (id) => {
+
+    const votes = movies.map((data) => {
+      if (data._id === id) {
+        return {
+          ...data,
+          totalVoted: data.totalVoted + 1
+        }
+      }
+      return data;
+    })
+    setMovies(votes)
+    localStorage.setItem("result", JSON.stringify(votes))
+  }
 
   const fetchData = async () => {
     const body = {
@@ -21,42 +77,29 @@ function Dashboard() {
       sort: "voting"
     }
     const { data } = await axios.post('https://hoblist.com/api/movieList', body);
-    console.log(data.result);
-    setMovies(data.result)
+    localStorage.setItem("result", JSON.stringify(data.result))
   }
-
-  useEffect(() => {
-    fetchData();
-    const token = localStorage.getItem("usertoken")
-    const userData = localStorage.getItem("userData")
-    const parsedData = JSON.parse(userData)
-    if (!token) {
-      navigate('/')
-    } else {
-      setUser(parsedData)
-    }
-  }, [navigate])
 
   return (
     <Box width="100%" className="Dashboard" >
       <Button
-                variant="contained"
-                color="secondary"
-                size="small"
-                onClick={handleOpen}
-                sx={{
-                  ml: 2,
-                  mb:2,
-                  color: "text.primary",
-                  display: "block",
-                  fontSize: {
-                    xs: "1rem",
-                    md: "1rem",
-                  },
-                }}
-              >
-                Company Info
-              </Button>
+        variant="contained"
+        color="secondary"
+        size="small"
+        onClick={handleOpen}
+        sx={{
+          ml: 2,
+          mb: 2,
+          color: "text.primary",
+          display: "block",
+          fontSize: {
+            xs: "1rem",
+            md: "1rem",
+          },
+        }}
+      >
+        Company Info
+      </Button>
       <Modal
         open={open}
         onClose={handleClose}
@@ -87,10 +130,19 @@ function Dashboard() {
           <Grid container >
             <Grid xs={2}>
               <Box className="voting-box">
-              <ArrowDropUpIcon sx={{fontSize:60}} />
-              <h2 className="movie-votes">{movie.voting}</h2>
-              <ArrowDropDownIcon sx={{fontSize:60}} />
-              <p style={{marginBottom:''}}>Votes</p>
+                <IconButton
+                  onClick={() => handleVoteinc(movie._id)}
+                >
+                  <ArrowDropUpIcon sx={{ fontSize: 60 }} />
+                </IconButton>
+                <h2 className="movie-votes">{movie.totalVoted}</h2>
+
+                <IconButton
+                  onClick={() => handleVotedec(movie._id)}
+                >
+                  <ArrowDropDownIcon sx={{ fontSize: 60 }} />
+                </IconButton>
+                <p style={{ marginBottom: '' }}>Votes</p>
               </Box>
             </Grid>
             <Grid xs={3}>
@@ -133,7 +185,6 @@ function Dashboard() {
                   <h3 className="movie-views">Views | Voted by </h3>
                   <h3 className="movie-views">{movie.totalVoted} </h3>
                   <h3 className="movie-views">People </h3>
-
                 </CardContent>
                 <CardActions disableSpacing>
 
